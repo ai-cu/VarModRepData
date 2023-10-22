@@ -4,9 +4,8 @@ import matplotlib.pyplot as plt
 
 # Function to convert an image to binary data
 def image_to_bits(image_path):
-    img = cv2.imread(image_path)  # Read the image in grayscale
+    img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)  # Read the image
     binary_data = np.unpackbits(img)  # Convert image to binary data
-    print(len(binary_data))
     return binary_data
 
 # Function to modulate binary data using QPSK
@@ -75,7 +74,7 @@ if __name__ == "__main__":
     qpsk_symbols_1 = qpsk_modulation(binary_data_1)
 
     # Add noise to the QPSK symbols (e.g., SNR of 10 dB)
-    snr_dB = 12
+    snr_dB = 20
     noisy_symbols = add_noise(qpsk_symbols_1, snr_dB)
 
     ip_2 = "data/simple3.png"
@@ -84,11 +83,6 @@ if __name__ == "__main__":
 
     print(symbol_stream_diff(qpsk_symbols_1, qs_2))
 
-    # You can now transmit or save the QPSK symbols as needed
-    # print("QPSK Symbols:", qpsk_symbols)
-    # print("Noisy Symbols:", noisy_symbols)
-    # print(len(qpsk_symbols))
-    # print(len(noisy_symbols))
     plt.scatter(np.real(noisy_symbols), np.imag(noisy_symbols), marker='o', label='QPSK Symbols')
     plt.title("QPSK Constellation Diagram")
     plt.xlabel("Real")
