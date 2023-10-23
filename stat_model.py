@@ -56,3 +56,5 @@ if __name__ == "__main__":
 
     # Fourth processing
     exp4, bin_data4 = process_QPSK_image_stream(qs_2, exp3)
+
+    # Check the differences?
