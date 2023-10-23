@@ -74,7 +74,7 @@ if __name__ == "__main__":
     qpsk_symbols_1 = qpsk_modulation(binary_data_1)
 
     # Add noise to the QPSK symbols (e.g., SNR of 10 dB)
-    snr_dB = 7
+    snr_dB = 10
     noisy_symbols = add_noise(qpsk_symbols_1, snr_dB)
 
     ip_2 = "data/simple3.png"
