@@ -7,7 +7,7 @@ def process_QPSK_image_stream_LRU(img_signals, expected):
     constellation = [1 + 1j, 1 - 1j, -1 + 1j, -1 - 1j]
     bin_data = []
     exp_ct = 0
-    exp = expected
+    exp = expected.copy()
     for symbol in img_signals:
         closest_symbol = min(constellation, key=lambda x: abs(x - symbol))
 
@@ -32,14 +32,13 @@ def process_QPSK_image_stream_LRU(img_signals, expected):
 
         symbol_index = constellation.index(closest_symbol)
         bin_data.extend([int(bit) for bit in format(symbol_index, '02b')])
-
     return (exp, bin_data)
 
 def process_QPSK_image_stream_PROB(img_signals, expected, prob):
     constellation = [1 + 1j, 1 - 1j, -1 + 1j, -1 - 1j]
     bin_data = []
     exp_ct = 0
-    exp = expected
+    exp = expected.copy()
     for symbol in img_signals:
         closest_symbol = min(constellation, key=lambda x: abs(x - symbol))
 
@@ -127,7 +126,7 @@ if __name__ == "__main__":
     print(comp_bin_data(bin_data3, bd_2))
     print(comp_bin_data(bin_data4, bd_2))
     
-    print("Difference in progressing demodulated image data")
+    print("Difference in progressing expectation lists")
     print(comp_bin_data(exp1, exp2))
     print(comp_bin_data(exp3, exp2))
     print(comp_bin_data(exp4, exp3))
@@ -139,7 +138,7 @@ if __name__ == "__main__":
     print(comp_bin_data(bin_data32, bd_2))
     print(comp_bin_data(bin_data42, bd_2))
     
-    print("Difference in progressing demodulated image data")
+    print("Difference in progressing expectation lists")
     print(comp_bin_data(exp12, exp22))
     print(comp_bin_data(exp22, exp32))
     print(comp_bin_data(exp32, exp42))
