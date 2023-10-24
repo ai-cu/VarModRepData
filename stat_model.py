@@ -1,8 +1,7 @@
 #process 4 images in a row and based on expectation change the boundary
 # [n1] -> [n1] -> [n2] -> [n2]
 import processor as pr
-
-expected = []
+import random
 
 def process_QPSK_image_stream_LRU(img_signals, expected):
     constellation = [1 + 1j, 1 - 1j, -1 + 1j, -1 - 1j]
@@ -28,6 +27,40 @@ def process_QPSK_image_stream_LRU(img_signals, expected):
             exp.append(closest_symbol)
         else:
             exp[exp_ct] = closest_symbol
+
+        exp_ct+=1
+
+        symbol_index = constellation.index(closest_symbol)
+        bin_data.extend([int(bit) for bit in format(symbol_index, '02b')])
+
+    return (exp, bin_data)
+
+def process_QPSK_image_stream_PROB(img_signals, expected, prob):
+    constellation = [1 + 1j, 1 - 1j, -1 + 1j, -1 - 1j]
+    bin_data = []
+    exp_ct = 0
+    exp = expected
+    for symbol in img_signals:
+        closest_symbol = min(constellation, key=lambda x: abs(x - symbol))
+
+        # Find expected index
+        if exp_ct < len(exp): exp_sym = exp[exp_ct] 
+        else: exp_sym = None
+
+        # Decide between 10% reduced distance to expected vs observed symbol 
+        if exp_sym != closest_symbol and exp_sym != None:
+            dist_to_exp = abs(exp_sym - symbol)
+            dist_to_clos = abs(closest_symbol - symbol)
+            if 0.9 * dist_to_exp <= dist_to_clos:
+                closest_symbol = exp_sym
+
+        # Update exp
+        if len(exp) != len(img_signals):
+            exp.append(closest_symbol)
+        else:
+            random_number = random.random()
+            if random_number <= prob:
+                exp[exp_ct] = closest_symbol
 
         exp_ct+=1
 
@@ -63,7 +96,7 @@ if __name__ == "__main__":
     ns_22 = pr.add_noise(qs_2, channel_SNR)
 
     # First processing
-    exp1, bin_data1 = process_QPSK_image_stream_LRU(ns_11, expected)
+    exp1, bin_data1 = process_QPSK_image_stream_LRU(ns_11, [])
 
     # Second processing
     exp2, bin_data2 = process_QPSK_image_stream_LRU(ns_12, exp1)
@@ -74,14 +107,39 @@ if __name__ == "__main__":
     # Fourth processing
     exp4, bin_data4 = process_QPSK_image_stream_LRU(ns_22, exp3)
 
+    # First processing
+    exp12, bin_data12 = process_QPSK_image_stream_PROB(ns_11, [], 0.5)
+
+    # Second processing
+    exp22, bin_data22 = process_QPSK_image_stream_PROB(ns_12, exp12, 0.5)
+
+    # Third processing
+    exp32, bin_data32 = process_QPSK_image_stream_PROB(ns_21, exp22, 0.5)
+
+    # Fourth processing
+    exp42, bin_data42 = process_QPSK_image_stream_PROB(ns_22, exp32, 0.5)
+
     # Check the differences?
-    print("Actual accuracy post demodulation with simple statistical model - LRU")
+    # LRU
+    print("Accuracy post demodulation with simple statistical model - LRU")
     print(comp_bin_data(bin_data1, bd_1))
     print(comp_bin_data(bin_data2, bd_1))
     print(comp_bin_data(bin_data3, bd_2))
     print(comp_bin_data(bin_data4, bd_2))
     
-    print("Similarity in progressing demodulated image data")
-    print(comp_bin_data(bin_data1, bin_data2))
-    print(comp_bin_data(bin_data3, bin_data2))
-    print(comp_bin_data(bin_data4, bin_data3))
+    print("Difference in progressing demodulated image data")
+    print(comp_bin_data(exp1, exp2))
+    print(comp_bin_data(exp3, exp2))
+    print(comp_bin_data(exp4, exp3))
+
+    # Probabilistic substitution
+    print("Accuraccy post demodulation with simple statistical model - Probabilistic Substitution")
+    print(comp_bin_data(bin_data12, bd_1))
+    print(comp_bin_data(bin_data22, bd_1))
+    print(comp_bin_data(bin_data32, bd_2))
+    print(comp_bin_data(bin_data42, bd_2))
+    
+    print("Difference in progressing demodulated image data")
+    print(comp_bin_data(exp12, exp22))
+    print(comp_bin_data(exp22, exp32))
+    print(comp_bin_data(exp32, exp42))
