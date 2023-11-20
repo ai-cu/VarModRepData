@@ -9,27 +9,70 @@ def image_to_bits(image_path):
     return binary_data
 
 # Function to modulate binary data using QPSK
-def qpsk_modulation(binary_data):
-    # Define QPSK constellation points
-    constellation = [1 + 1j, 1 - 1j, -1 + 1j, -1 - 1j]
+def qam4_modulation(binary_data):
+    # Define 4-QAM constellation points
+    # The points are arranged in a square grid.
+    constellation = {
+        (0, 0): (-1-1j),  # Example constellation point for 00
+        (0, 1): (-1+1j),  # Example constellation point for 01
+        (1, 0): (1-1j),   # Example constellation point for 10
+        (1, 1): (1+1j)    # Example constellation point for 11
+    }
 
-    # Initialize variables
-    symbols = []
-    i = 0
+    # Ensure the input bit array is a multiple of 2
+    if len(binary_data) % 2 != 0:
+        raise ValueError("Number of bits must be a multiple of 2 for 4-QAM")
 
-    # Convert binary data to QPSK symbols
-    while i < len(binary_data):
-        if i + 1 < len(binary_data):
-            # Take two bits at a time for QPSK modulation
-            bits = binary_data[i:i+2]
+    # Split the bit array into chunks of 2 bits
+    bit_chunks = [binary_data[i:i+2] for i in range(0, len(binary_data), 2)]
 
-            # Map the bits to a QPSK symbol
-            symbol = constellation[int(''.join(map(str, bits)), 2)]
-            symbols.append(symbol)
+    # Map each chunk to a constellation point
+    symbols = [constellation[tuple(chunk)] for chunk in bit_chunks]
 
-            i += 2
-        else:
-            break
+    return symbols
+
+def qam16_modulation(binary_data):
+    # Define 16 QAM constellation points
+    constellation = {
+        (0, 0, 0, 0): (-3+3j), (0, 0, 0, 1): (-3+1j), 
+        (0, 0, 1, 0): (-3-3j), (0, 0, 1, 1): (-3-1j), 
+        (0, 1, 0, 0): (-1+3j), (0, 1, 0, 1): (-1+1j), 
+        (0, 1, 1, 0): (-1-3j), (0, 1, 1, 1): (-1-1j), 
+        (1, 0, 0, 0): (3+3j),  (1, 0, 0, 1): (3+1j), 
+        (1, 0, 1, 0): (3-3j),  (1, 0, 1, 1): (3-1j), 
+        (1, 1, 0, 0): (1+3j),  (1, 1, 0, 1): (1+1j), 
+        (1, 1, 1, 0): (1-3j),  (1, 1, 1, 1): (1-1j)
+    }
+
+    bit_chunks = [binary_data[i:i+4] for i in range(0, len(binary_data), 4)]
+
+    # Map each chunk to a constellation point
+    symbols = [constellation[tuple(chunk)] for chunk in bit_chunks]
+
+    return symbols
+
+def qam64_modulation(binary_data):
+    # Define 64-QAM constellation points
+    # Each point is represented by a unique combination of amplitude and phase.
+    # Constellation points are typically arranged in a square grid.
+    constellation = {}
+    values = [-7, -5, -3, -1, 1, 3, 5, 7]  # Possible values for I and Q components
+    bit_combinations = [(i, j, k, l, m, n) for i in [0, 1] for j in [0, 1] for k in [0, 1] for l in [0, 1] for m in [0, 1] for n in [0, 1]]
+
+    for i, combination in enumerate(bit_combinations):
+        I = values[i // 8]  # Integer division to cycle through I values
+        Q = values[i % 8]   # Modulus to cycle through Q values
+        constellation[combination] = complex(I, Q)
+
+    # Ensure the input bit array is a multiple of 6
+    if len(binary_data) % 6 != 0:
+        raise ValueError("Number of bits must be a multiple of 6 for 64-QAM")
+
+    # Split the bit array into chunks of 6 bits
+    bit_chunks = [binary_data[i:i+6] for i in range(0, len(binary_data), 6)]
+
+    # Map each chunk to a constellation point
+    symbols = [constellation[tuple(chunk)] for chunk in bit_chunks]
 
     return symbols
 
@@ -71,20 +114,23 @@ if __name__ == "__main__":
     binary_data_1 = image_to_bits(image_path_1)
 
     # Modulate the binary data using QPSK
-    qpsk_symbols_1 = qpsk_modulation(binary_data_1)
+    qpsk_symbols_1 = qam4_modulation(binary_data_1)
 
     # Add noise to the QPSK symbols (e.g., SNR of 10 dB)
-    snr_dB = 7
+    snr_dB = 20
     noisy_symbols = add_noise(qpsk_symbols_1, snr_dB)
 
-    ip_2 = "data/simple3.png"
+    ip_2 = "B76C2C61-80FA-48C9-957E-B9AEEAD9740D_1_105_c.jpeg"
     bd_2 = image_to_bits(ip_2)
-    qs_2 = qpsk_modulation(bd_2)
+    qs_2 = qam4_modulation(bd_2)
+
+    qs_3 = qam16_modulation(bd_2)
+    noisy_symbols_2 = add_noise(qs_3, snr_dB)
 
     print(symbol_stream_diff(qpsk_symbols_1, qs_2))
 
-    plt.scatter(np.real(noisy_symbols), np.imag(noisy_symbols), marker='o', label='QPSK Symbols')
-    plt.title("QPSK Constellation Diagram")
+    plt.scatter(np.real(noisy_symbols_2), np.imag(noisy_symbols_2), marker='o', label='16QAM Symbols')
+    plt.title("16QAM Constellation Diagram")
     plt.xlabel("Real")
     plt.ylabel("Imaginary")
     plt.grid()
