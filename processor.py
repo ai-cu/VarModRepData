@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 # Function to convert an image to binary data
 def image_to_bits(image_path):
     img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)  # Read the image
+    
     binary_data = np.unpackbits(img)  # Convert image to binary data
     return binary_data
 
@@ -117,14 +118,14 @@ if __name__ == "__main__":
     qpsk_symbols_1 = qam4_modulation(binary_data_1)
 
     # Add noise to the QPSK symbols (e.g., SNR of 10 dB)
-    snr_dB = 20
+    snr_dB = 25
     noisy_symbols = add_noise(qpsk_symbols_1, snr_dB)
 
     ip_2 = "B76C2C61-80FA-48C9-957E-B9AEEAD9740D_1_105_c.jpeg"
     bd_2 = image_to_bits(ip_2)
     qs_2 = qam4_modulation(bd_2)
 
-    qs_3 = qam16_modulation(bd_2)
+    qs_3 = qam64_modulation(bd_2)
     noisy_symbols_2 = add_noise(qs_3, snr_dB)
 
     print(symbol_stream_diff(qpsk_symbols_1, qs_2))
