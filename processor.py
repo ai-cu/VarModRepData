@@ -2,6 +2,31 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
+def process_ML_model_pred(img_signals, expected, constellation):
+    #look at prediction vs observed and do the 10% thing
+    bin_data = []
+    ml_pred = expected[0]
+    ml_signals = [constellation[min(round(x), 63)] for x in ml_pred]
+    exp_ct = 0
+    for symbol in img_signals:
+        closest_symbol = min(constellation, key=lambda x: abs(x - symbol))
+
+        # Find expected index
+        exp_sym = ml_signals[exp_ct] 
+
+        # Decide between 10% reduced distance to expected vs observed symbol 
+        if exp_sym != closest_symbol and exp_sym != None:
+            dist_to_exp = abs(exp_sym - symbol)
+            dist_to_clos = abs(closest_symbol - symbol)
+            if 0.9 * dist_to_exp <= dist_to_clos:
+                closest_symbol = exp_sym
+
+        exp_ct+=1
+
+        symbol_index = constellation.index(closest_symbol)
+        bin_data.append(symbol_index)
+    return bin_data
+
 # Function to convert an image to binary data
 def image_to_bits(image_path):
     img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)  # Read the image
